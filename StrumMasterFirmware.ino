@@ -99,7 +99,7 @@ void loop() {
     Serial1.readBytesUntil('\n', bt_message, MAX_INPUT_LENGTH);
     if (!CONNECTED) {
       if (strstr(bt_message, "CONNECTING") != NULL) {
-        bt_message[0] = 0;
+        bt_message[0] = 0;  
         Serial1.write("Connected\n");
         Serial.println("\nConnected");
         CONNECTED = true;
@@ -121,8 +121,9 @@ void loop() {
         printConfig();
       } else if (currentMode == LIVE) {
         if (strstr(bt_message, "LIVE:") != NULL) {
-          char command = bt_message[5];
-          uint8_t result = keyboard_action(command);
+          char command[2];
+          strncpy(command, bt_message + 5, 2);
+          uint8_t result = keyboard_action(atoi(command));
           if (result != 0) {
             Serial.print("Played button #");
             Serial.println(result);
@@ -240,40 +241,46 @@ void pick(uint8_t stringState[7]) {
   }
 }
 
-uint8_t keyboard_action(char command) {
+uint8_t keyboard_action(uint8_t command) {
   uint8_t played = 0;
   switch (command) {
     case 'a':
+    case 00:
       digitalWrite(SOLENOID_PINS[0], HIGH);  // first servo on
       delay(fireDelay);
       digitalWrite(SOLENOID_PINS[0], LOW);  // first servo off
       played = 1;
       break;
     case 's':
+    case 01:
       digitalWrite(SOLENOID_PINS[1], HIGH);  // second servo on
       delay(fireDelay);
       digitalWrite(SOLENOID_PINS[1], LOW);  // second servo off
       played = 2;
       break;
     case 'd':
+    case 02:
       digitalWrite(SOLENOID_PINS[2], HIGH);  // third servo on
       delay(fireDelay);
       digitalWrite(SOLENOID_PINS[2], LOW);  // third servo off
       played = 3;
       break;
     case 'f':
+    case 03:
       digitalWrite(SOLENOID_PINS[3], HIGH);  // fourth servo on
       delay(fireDelay);
       digitalWrite(SOLENOID_PINS[3], LOW);  // fourth servo off
       played = 4;
       break;
     case 'g':
+    case 04:
       digitalWrite(SOLENOID_PINS[4], HIGH);  // fifth servo on
       delay(fireDelay);
       digitalWrite(SOLENOID_PINS[4], LOW);  // fifth servo off
       played = 5;
       break;
     case 'h':
+    case 05:
       digitalWrite(SOLENOID_PINS[5], HIGH);  // sixth servo on
       delay(fireDelay);
       digitalWrite(SOLENOID_PINS[5], LOW);  // sixth servo off
