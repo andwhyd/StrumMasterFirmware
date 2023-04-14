@@ -13,6 +13,23 @@
 #include <AnalogMultiButton.h>
 #include <ArduinoJson.h>
 
+// ******************************************************************
+// SPI Flash setup
+// Note that you MUST have a flash chip that's formatted with a flash
+// filesystem before running.  See the fatfs_format example
+// to perform this formatting.
+#include <SPI.h>
+#include <SdFat.h>
+#include <Adafruit_SPIFlash.h>
+// for flashTransport definition
+#include "flash_config.h"
+Adafruit_SPIFlash flash(&flashTransport);
+// file system object from SdFat
+FatVolume fatfs;
+// Configuration for the datalogging file:
+#define FILE_NAME "buttons_config.json"
+// ******************************************************************
+
 // Serial setup
 #define PC_SERIAL_BAUDRATE 115200
 #define BT_SERIAL_BAUDRATE 9600
@@ -92,6 +109,25 @@ void setup() {
 
   delay(1000);
   Serial.println("Setup complete");
+
+  // ******************************************************************
+  // Initialize flash library and check its chip ID.
+  if (!flash.begin()) {
+    Serial.println("Error, failed to initialize flash chip!");
+    while (1) delay(1);
+  }
+  Serial.print("Flash chip JEDEC ID: 0x");
+  Serial.println(flash.getJEDECID(), HEX);
+  // First call begin to mount the filesystem.  Check that it returns true
+  // to make sure the filesystem was mounted.
+  if (!fatfs.begin(&flash)) {
+    Serial.println("Error, failed to mount newly formatted filesystem!");
+    Serial.println("Was the flash chip formatted with the fatfs_format example?");
+    while (1) delay(1);
+  }
+  Serial.println("Mounted filesystem!");
+  // TODO: check if file exists. if yes, load it to buttons_config
+  // ******************************************************************
 }
 
 void loop() {
@@ -99,7 +135,7 @@ void loop() {
     Serial1.readBytesUntil('\n', bt_message, MAX_INPUT_LENGTH);
     if (!CONNECTED) {
       if (strstr(bt_message, "CONNECTING") != NULL) {
-        bt_message[0] = 0;  
+        bt_message[0] = 0;
         Serial1.write("Connected\n");
         Serial.println("\nConnected");
         CONNECTED = true;
@@ -118,6 +154,23 @@ void loop() {
         Serial.println(currentMode);
       } else if (currentMode == CONFIGURING) {
         config_status = parseJson();
+        // ******************************************************************
+        File32 dataFile = fatfs.open(FILE_NAME, FILE_WRITE);
+        // Check that the file opened successfully and write to it.
+        if (dataFile) {
+          dataFile.print(bt_message);
+          dataFile.close;
+        }
+        dataFile = fatfs.open(FILE_NAME, FILE_READ);
+        if (dataFile) {
+          Serial.println("data file has been updated with new config:");
+          while (myFile) {
+            Serial.print(dataFile.read());
+          }
+          dataFile.close();
+        }
+        // TODO: overwrite file instead of appending to it
+        // ******************************************************************
         printConfig();
       } else if (currentMode == LIVE) {
         if (strstr(bt_message, "LIVE:") != NULL) {
