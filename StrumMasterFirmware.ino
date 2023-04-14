@@ -119,7 +119,7 @@ void loop() {
       } else if (currentMode == CONFIGURING) {
         config_status = parseJson();
         printConfig();
-        Serial1.write("CONFIRMED");
+        Serial1.write("CONFIGURED");
       } else if (currentMode == LIVE) {
         if (strstr(bt_message, "LIVE:") != NULL) {
           char command[2];
