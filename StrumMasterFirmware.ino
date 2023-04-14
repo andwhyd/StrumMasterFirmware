@@ -99,13 +99,13 @@ void loop() {
     Serial1.readBytesUntil('\n', bt_message, MAX_INPUT_LENGTH);
     if (!CONNECTED) {
       if (strstr(bt_message, "CONNECTING") != NULL) {
-        bt_message[0] = 0;  
+        bt_message[0] = 0;
         Serial1.write("Connected\n");
         Serial.println("\nConnected");
         CONNECTED = true;
       }
     } else {
-      Serial.print("\nRecieved: ");
+      Serial.print("\nReceived: ");
       Serial.println(bt_message);
       if (strstr(bt_message, "OK+LOST") != NULL) {
         CONNECTED = false;
@@ -119,6 +119,7 @@ void loop() {
       } else if (currentMode == CONFIGURING) {
         config_status = parseJson();
         printConfig();
+        Serial1.write("CONFIRMED");
       } else if (currentMode == LIVE) {
         if (strstr(bt_message, "LIVE:") != NULL) {
           char command[2];
@@ -142,15 +143,7 @@ void loop() {
       if (buttons.onPress(j)) {
         Serial.print(j + 1);
         Serial.println(" has been pressed");
-        if (buttons_config[j][6] == 0) {  // Pick
-          pick(buttons_config[j]);
-        } else if (buttons_config[j][6] == 1) {  // Strum U
-          strumUp(buttons_config[j]);
-        } else if (buttons_config[j][6] == 2) {  // Strum D
-          strumDown(buttons_config[j]);
-        } else {
-          Serial.println("no action identified");
-        }
+        playAction(j);
       }
     }
   } else if (currentMode == SERIAL_MODE) {
@@ -215,25 +208,37 @@ void printConfig() {
   }
 }
 
-void strumDown(uint8_t stringState[7]) {
+void playAction(int buttonIndex) {
+  if (buttons_config[buttonIndex][6] == 0) {  // Pick
+    pick(buttonIndex);
+  } else if (buttons_config[buttonIndex][6] == 1) {  // Strum U
+    strumUp(buttonIndex);
+  } else if (buttons_config[buttonIndex][6] == 2) {  // Strum D
+    strumDown(buttonIndex);
+  } else {
+    Serial.println("no action identified");
+  }
+}
+
+void strumDown(int buttonIndex) {
   for (int i = 0; i < 6; i++) {
-    digitalWrite(SOLENOID_PINS[i], stringState[i]);
+    digitalWrite(SOLENOID_PINS[i], buttons_config[buttonIndex][i]);
     delay(fireDelay);
     digitalWrite(SOLENOID_PINS[i], LOW);
   }
 }
 
-void strumUp(uint8_t stringState[7]) {
+void strumUp(int buttonIndex) {
   for (int i = 5; i >= 0; i--) {
-    digitalWrite(SOLENOID_PINS[i], stringState[i]);
+    digitalWrite(SOLENOID_PINS[i], buttons_config[buttonIndex][i]);
     delay(fireDelay);
     digitalWrite(SOLENOID_PINS[i], LOW);
   }
 }
 
-void pick(uint8_t stringState[7]) {
+void pick(int buttonIndex) {
   for (int i = 0; i < 6; i++) {
-    digitalWrite(SOLENOID_PINS[i], stringState[i]);
+    digitalWrite(SOLENOID_PINS[i], buttons_config[buttonIndex][i]);
   }
   delay(fireDelay);
   for (int i = 0; i < 6; i++) {
@@ -246,44 +251,32 @@ uint8_t keyboard_action(uint8_t command) {
   switch (command) {
     case 'a':
     case 00:
-      digitalWrite(SOLENOID_PINS[0], HIGH);  // first servo on
-      delay(fireDelay);
-      digitalWrite(SOLENOID_PINS[0], LOW);  // first servo off
+      playAction(0);
       played = 1;
       break;
     case 's':
     case 01:
-      digitalWrite(SOLENOID_PINS[1], HIGH);  // second servo on
-      delay(fireDelay);
-      digitalWrite(SOLENOID_PINS[1], LOW);  // second servo off
+      playAction(1);
       played = 2;
       break;
     case 'd':
     case 02:
-      digitalWrite(SOLENOID_PINS[2], HIGH);  // third servo on
-      delay(fireDelay);
-      digitalWrite(SOLENOID_PINS[2], LOW);  // third servo off
+      playAction(2);
       played = 3;
       break;
     case 'f':
     case 03:
-      digitalWrite(SOLENOID_PINS[3], HIGH);  // fourth servo on
-      delay(fireDelay);
-      digitalWrite(SOLENOID_PINS[3], LOW);  // fourth servo off
+      playAction(3);
       played = 4;
       break;
     case 'g':
     case 04:
-      digitalWrite(SOLENOID_PINS[4], HIGH);  // fifth servo on
-      delay(fireDelay);
-      digitalWrite(SOLENOID_PINS[4], LOW);  // fifth servo off
+      playAction(4);
       played = 5;
       break;
     case 'h':
     case 05:
-      digitalWrite(SOLENOID_PINS[5], HIGH);  // sixth servo on
-      delay(fireDelay);
-      digitalWrite(SOLENOID_PINS[5], LOW);  // sixth servo off
+      playAction(5);
       played = 6;
       break;
   }
