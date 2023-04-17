@@ -1,7 +1,7 @@
 import msvcrt
 import serial
 
-arduino = serial.Serial("COM13", 115200)
+arduino = serial.Serial("COM5", 115200)
 
 print('a,s,d,f,g,h or q:')
 input_char = msvcrt.getch()

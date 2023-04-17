@@ -12,6 +12,7 @@
  **/
 #include <AnalogMultiButton.h>
 #include <ArduinoJson.h>
+#include <Adafruit_NeoPixel.h>
 
 // Serial setup
 #define PC_SERIAL_BAUDRATE 115200
@@ -26,6 +27,10 @@ enum Mode : uint8_t {
   ERROR = 99
 };
 Mode currentMode;
+
+// RGB LED setup
+uint8_t LED_BRIGHTNESS = 4;               // out of 255
+Adafruit_NeoPixel strip(1, 40, NEO_RGB);  // 1 LED, pin 40, RGB
 
 // JSON variables
 #define MAX_INPUT_LENGTH 400
@@ -92,6 +97,12 @@ void setup() {
 
   delay(1000);
   Serial.println("Setup complete");
+
+  // Initialize RGB LED "strip" (only 1 LED in strip)
+  strip.begin();
+  strip.setBrightness(LED_BRIGHTNESS);
+  strip.setPixelColor(0, 0, 0, 0);
+  strip.show();
 }
 
 void loop() {
@@ -121,6 +132,8 @@ void loop() {
         printConfig();
         Serial1.write("CONFIGURED");
       } else if (currentMode == LIVE) {
+        strip.setPixelColor(0, 0, 0, 255); // blue
+        strip.show();
         if (strstr(bt_message, "LIVE:") != NULL) {
           char command[2];
           strncpy(command, bt_message + 5, 2);
@@ -138,6 +151,8 @@ void loop() {
   }
   if (currentMode == STANDARD) {
     // Parses button stuff and does solenoid stuff
+    strip.setPixelColor(0, 255, 0, 0); // red
+    strip.show();
     buttons.update();
     for (int j = 0; j < BUTTONS_TOTAL; j++) {
       if (buttons.onPress(j)) {
@@ -147,6 +162,8 @@ void loop() {
       }
     }
   } else if (currentMode == SERIAL_MODE) {
+    strip.setPixelColor(0, 0, 255, 0); // green
+    strip.show();
     if (Serial.available()) {
       char command = Serial.read();
       uint8_t result = keyboard_action(command);
