@@ -68,7 +68,7 @@ uint8_t buttons_config[BUTTONS_TOTAL][7] = {
 ;
 
 // Delay config
-const int fireDelay = 15;  // ms delay during which solenoid is activated
+uint16_t fireDelay = 15;  // ms delay during which solenoid is activated
 
 bool CONNECTED;
 bool config_status;
@@ -129,8 +129,14 @@ void loop() {
                 Serial.println(currentMode);
             } else if (currentMode == CONFIGURING) {
                 Serial1.println("CONFIGURING");
-                config_status = parseJson();
-                printConfig();
+                if (strstr(bt_message, "FIREDELAY:") != NULL) {
+                    char fireDelayC[3];
+                    strncpy(fireDelayC, bt_message + 10, 3);
+                    fireDelay = atoi(fireDelayC);
+                } else {
+                    config_status = parseJson();
+                    printConfig();
+                }
                 Serial1.println("CONFIGURED");
             } else if (currentMode == LIVE) {
                 if (strstr(bt_message, "LIVE:") != NULL) {
@@ -184,6 +190,11 @@ bool parseJson() {
         Serial.print(F("deserializeJson() failed: "));
         Serial.println(error.f_str());
         return false;
+    }
+    for (int j = 0; j < buttonNum; j++) {
+        for (int k = 0; k < 6; k++) {
+            buttons_config[j][k] = 0;
+        }
     }
     buttonNum = doc[BUTTON_NUM_KEY];
     if (buttonNum > 12 || buttonNum < 1) {
