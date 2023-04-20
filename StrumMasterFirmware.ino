@@ -69,6 +69,7 @@ uint8_t buttons_config[BUTTONS_TOTAL][7] = {
 
 // Delay config
 uint16_t fireDelay = 15;  // ms delay during which solenoid is activated
+const uint pickDelay = 12;  // ms delay during which solenoid is activated
 
 bool CONNECTED;
 bool config_status;
@@ -253,16 +254,18 @@ void playAction(int buttonIndex) {
 void strumDown(int buttonIndex) {
     for (int i = 0; i < 6; i++) {
         digitalWrite(SOLENOID_PINS[i], buttons_config[buttonIndex][i]);
-        delay(fireDelay);
+        delay(pickDelay);
         digitalWrite(SOLENOID_PINS[i], LOW);
+        delay(fireDelay);
     }
 }
 
 void strumUp(int buttonIndex) {
     for (int i = 5; i >= 0; i--) {
         digitalWrite(SOLENOID_PINS[i], buttons_config[buttonIndex][i]);
-        delay(fireDelay);
+        delay(pickDelay);
         digitalWrite(SOLENOID_PINS[i], LOW);
+        delay(fireDelay);
     }
 }
 
@@ -270,7 +273,7 @@ void pick(int buttonIndex) {
     for (int i = 0; i < 6; i++) {
         digitalWrite(SOLENOID_PINS[i], buttons_config[buttonIndex][i]);
     }
-    delay(fireDelay);
+    delay(pickDelay);
     for (int i = 0; i < 6; i++) {
         digitalWrite(SOLENOID_PINS[i], LOW);
     }
