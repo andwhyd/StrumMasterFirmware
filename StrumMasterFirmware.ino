@@ -68,8 +68,8 @@ uint8_t buttons_config[BUTTONS_TOTAL][7] = {
 ;
 
 // Delay config
-uint16_t fireDelay = 15;  // ms delay during which solenoid is activated
-const uint pickDelay = 12;  // ms delay during which solenoid is activated
+uint8_t PICK_DELAYS[BUTTONS_TOTAL] = {12, 12, 12, 12, 12, 12};  // ms delay during which solenoid is activated
+uint16_t STRUM_DELAYS[BUTTONS_TOTAL] = {0, 0, 0, 0, 0, 0};
 
 bool CONNECTED;
 bool config_status;
@@ -130,10 +130,18 @@ void loop() {
                 Serial.println(currentMode);
             } else if (currentMode == CONFIGURING) {
                 Serial1.println("CONFIGURING");
-                if (strstr(bt_message, "FIREDELAY:") != NULL) {
+                if (strstr(bt_message, "STRUMDELAY:") != NULL) { // STRUMDELAY:##:###
+                    char buttonNum[3];
+                    strncpy(buttonNum, bt_message + 11, 2);
                     char fireDelayC[3];
-                    strncpy(fireDelayC, bt_message + 10, 3);
-                    fireDelay = atoi(fireDelayC);
+                    strncpy(fireDelayC, bt_message + 14, 3);
+                    STRUM_DELAYS[atoi(buttonNum)] = atoi(fireDelayC);
+                } else if (strstr(bt_message, "PICKDELAY:") != NULL) { // PICKDELAY:##:##
+                    char buttonNum[3];
+                    strncpy(buttonNum, bt_message + 10, 2);
+                    char pickDelayC[3];
+                    strncpy(pickDelayC, bt_message + 13, 2);
+                    PICK_DELAYS[atoi(buttonNum)] = atoi(pickDelayC);
                 } else {
                     config_status = parseJson();
                     printConfig();
@@ -254,18 +262,18 @@ void playAction(int buttonIndex) {
 void strumDown(int buttonIndex) {
     for (int i = 0; i < 6; i++) {
         digitalWrite(SOLENOID_PINS[i], buttons_config[buttonIndex][i]);
-        delay(pickDelay);
+        delay(PICK_DELAYS[buttonIndex]);
         digitalWrite(SOLENOID_PINS[i], LOW);
-        delay(fireDelay);
+        delay(STRUM_DELAYS[buttonIndex]);
     }
 }
 
 void strumUp(int buttonIndex) {
     for (int i = 5; i >= 0; i--) {
         digitalWrite(SOLENOID_PINS[i], buttons_config[buttonIndex][i]);
-        delay(pickDelay);
+        delay(PICK_DELAYS[buttonIndex]);
         digitalWrite(SOLENOID_PINS[i], LOW);
-        delay(fireDelay);
+        delay(STRUM_DELAYS[buttonIndex]);
     }
 }
 
@@ -273,7 +281,7 @@ void pick(int buttonIndex) {
     for (int i = 0; i < 6; i++) {
         digitalWrite(SOLENOID_PINS[i], buttons_config[buttonIndex][i]);
     }
-    delay(pickDelay);
+    delay(PICK_DELAYS[buttonIndex]);
     for (int i = 0; i < 6; i++) {
         digitalWrite(SOLENOID_PINS[i], LOW);
     }
